@@ -1,0 +1,32 @@
+# ── Python ───────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# ── Node / Frontend ──────────────────────
+node_modules/
+dist/
+build/
+.vite/
+
+# ── Environment variables ────────────────
+.env
+.env.*
+
+# ── Logs ────────────────────────────────
+*.log
+logs/
+
+# ── OS ──────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── IDE ─────────────────────────────────
+.vscode/
+.idea/
