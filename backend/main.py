@@ -32,15 +32,15 @@ async def health():
     return {"status": "ok"}
 
 
+AVAILABLE_BRANCHES = [
+    {"name": "feat/partiql-support",        "pr": "PR #1 - PartiQL support"},
+    {"name": "feat/support-streaming",      "pr": "PR #2 - DynamoDB Streams"},
+    {"name": "feat/support-batch-read-ops", "pr": "PR #3 - Batch read ops"},
+]
+
 @app.get("/branches")
 async def list_branches():
-    return {
-        "branches": [
-            {"name": "feat/partiql-support",    "pr": "PR #1 - PartiQL support"},
-            {"name": "feat/support-batch-read-ops", "pr": "PR #3 - Batch read ops"},
-            {"name": "feat/support-streaming",  "pr": "PR #2 - DynamoDB Streams"},
-        ]
-    }
+    return {"branches": AVAILABLE_BRANCHES}
 
 
 @app.post("/chat")
