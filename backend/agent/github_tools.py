@@ -16,33 +16,62 @@ HEADERS = {
 async def get_branch_diff(branch: str, base: str = "main") -> dict:
     """
     Compara una rama contra main y retorna los archivos cambiados con sus diffs.
-    Equivalente a un fetch() async en JS.
     """
     url = f"{BASE_URL}/repos/{GITHUB_REPO}/compare/{base}...{branch}"
-    
-    # httpx.AsyncClient es como axios en JS
-    # El "async with" cierra la conexión automáticamente al terminar (como try/finally)
+
     async with httpx.AsyncClient(timeout=30) as client:
-        resp = await client.get(url, headers=HEADERS)
-        
-        # Manejo de errores
+        try:
+            resp = await client.get(url, headers=HEADERS)
+        except httpx.TimeoutException:
+            return {"error": "Timeout conectando con GitHub. Intenta de nuevo."}
+        except httpx.RequestError as e:
+            return {"error": f"Error de conexión con GitHub: {str(e)}"}
+
+        # Rate limit alcanzado
+        if resp.status_code == 403:
+            reset_time = resp.headers.get("X-RateLimit-Reset", "desconocido")
+            return {"error": f"Rate limit de GitHub alcanzado. Reset en: {reset_time}"}
+
+        # Rama o repo no encontrado
         if resp.status_code == 404:
-            return {"error": f"Branch '{branch}' no encontrada."}
+            return {"error": f"Branch '{branch}' no encontrada o el repositorio no existe."}
+
+        # Cualquier otro error HTTP
         if resp.status_code != 200:
-            return {"error": f"GitHub API error: {resp.status_code}"}
+            return {"error": f"GitHub API error {resp.status_code}: {resp.text[:200]}"}
 
         data = resp.json()
-        
+
+        # Repo vacío o sin commits
+        if data.get("status") == "identical":
+            return {"error": f"La rama '{branch}' es idéntica a main. No hay cambios."}
+
+        if not data.get("files"):
+            return {"error": f"No se encontraron archivos modificados entre '{branch}' y main."}
+
         files = []
-        for f in data.get("files", []):  # .get() es como el ?. de JS (evita KeyError)
+        for f in data.get("files", []):
+            # Ignorar archivos eliminados
             if f.get("status") == "removed":
-                continue  # equivalente a "continue" en JS dentro de un for
+                continue
+
+            # Detectar archivos binarios (no tienen patch)
+            if "patch" not in f:
+                files.append({
+                    "filename": f["filename"],
+                    "status": f["status"],
+                    "additions": f.get("additions", 0),
+                    "deletions": f.get("deletions", 0),
+                    "patch": "[archivo binario — no se puede mostrar diff]",
+                })
+                continue
+
             files.append({
                 "filename": f["filename"],
                 "status": f["status"],
                 "additions": f.get("additions", 0),
                 "deletions": f.get("deletions", 0),
-                "patch": f.get("patch", "[archivo binario o vacío]"),
+                "patch": f.get("patch", ""),
             })
 
         return {
@@ -54,26 +83,41 @@ async def get_branch_diff(branch: str, base: str = "main") -> dict:
     
 async def get_file_content(filepath: str, branch: str) -> str:
     """
-    # Obtiene el contenido completo de un archivo en una rama específica.
+    Obtiene el contenido completo de un archivo en una rama específica.
     """
     url = f"{BASE_URL}/repos/{GITHUB_REPO}/contents/{filepath}?ref={branch}"
-    
+
     async with httpx.AsyncClient(timeout=30) as client:
-        resp = await client.get(url, headers=HEADERS)
-        
+        try:
+            resp = await client.get(url, headers=HEADERS)
+        except httpx.TimeoutException:
+            return f"[Timeout obteniendo {filepath}]"
+        except httpx.RequestError as e:
+            return f"[Error de conexión: {str(e)}]"
+
+        if resp.status_code == 403:
+            return f"[Rate limit alcanzado obteniendo {filepath}]"
+
         if resp.status_code == 404:
             return f"[Archivo no encontrado: {filepath}]"
+
         if resp.status_code != 200:
-            return f"[GitHub API error: {resp.status_code}]"
+            return f"[GitHub API error {resp.status_code}]"
 
         data = resp.json()
-        
-        # GitHub retorna el contenido en base64, hay que decodificarlo
+
+        # Archivo demasiado grande (GitHub no retorna contenido > 1MB)
+        if data.get("size", 0) > 1_000_000:
+            return f"[Archivo demasiado grande para analizar: {data.get('size', 0)} bytes]"
+
         if data.get("encoding") == "base64":
             import base64
-            content = base64.b64decode(data["content"]).decode("utf-8", errors="replace")
-            return content
-        
+            try:
+                content = base64.b64decode(data["content"]).decode("utf-8", errors="replace")
+                return content
+            except Exception as e:
+                return f"[Error decodificando archivo: {str(e)}]"
+
         return "[No se pudo decodificar el archivo]"
 
 
