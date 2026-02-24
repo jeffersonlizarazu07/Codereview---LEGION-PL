@@ -21,6 +21,10 @@ def build_graph():
     graph = StateGraph(AgentState)
 
     graph.add_node("router", router_node)
+    
+    """
+    Se registran dos nodos fetch separados con la misma función para que el streaming pueda identificar el nodo por nombre y mostrar el status correcto en el frontend
+    """
     graph.add_node("fetch_diff_qa", fetch_diff_node)
     graph.add_node("fetch_diff_review", fetch_diff_node)
     graph.add_node("qa_node", qa_node)

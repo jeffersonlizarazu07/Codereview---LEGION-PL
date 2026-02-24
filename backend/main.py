@@ -15,7 +15,6 @@ from langchain_core.messages import HumanMessage, AIMessage
 
 app = FastAPI(title="Code Review Agent")
 
-# Equivalente a cors() en Express
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -103,13 +102,14 @@ async def chat_stream(req: ChatRequest):
         "final_output": "",
     }
 
-    async def generate():                                        # indentado 4 espacios
+    async def generate():                                       
         try:
             async for event in agent_graph.astream_events(initial_state, version="v2"):
                 kind = event["event"]
                 metadata = event.get("metadata", {})
                 langgraph_node = metadata.get("langgraph_node", "")
 
+                # Filtramos por langgraph_node para ignorar tokens del router, solo mostramos al usuario lo que generan qa_node y review_node
                 if kind == "on_chat_model_stream":
                     if langgraph_node in ["qa_node", "review_node"]:
                         chunk = event["data"]["chunk"]
@@ -128,7 +128,6 @@ async def chat_stream(req: ChatRequest):
         except Exception as e:
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
 
-    # ← Este return está FUERA de generate(), al mismo nivel que "async def generate()"
     return StreamingResponse(
         generate(),
         media_type="text/event-stream",

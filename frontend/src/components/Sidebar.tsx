@@ -1,6 +1,7 @@
 import { type Branch } from '../types'
 import { QUICK_PROMPTS } from '../constants'
 
+/* Props que recibe el Sidebar desde App.tsx. Usamos callbacks (onBranchChange, onPromptClick, onClear) en vez de manejar el estado aquí adentro — el estado vive en useChat para mantenerlo centralizado */
 interface SidebarProps {
   branch: string
   branches: Branch[]
@@ -10,6 +11,7 @@ interface SidebarProps {
   onClear: () => void
 }
 
+// Sidebar con selector de rama y quick prompts. Recibe callbacks del padre para mantener el estado centralizado en useChat
 export default function Sidebar({ branch, branches, isLoading, onBranchChange, onPromptClick, onClear }: SidebarProps) {
   return (
     <aside style={{

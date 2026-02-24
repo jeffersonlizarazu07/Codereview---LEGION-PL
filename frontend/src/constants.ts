@@ -1,3 +1,4 @@
+// Labels que se muestran en el header mientras el agente procesa cada nodo
 export const STATUS_LABELS: Record<string, string> = {
   router: '🔀 Clasificando intención...',
   fetch_diff_qa: '📡 Obteniendo diff de GitHub...',
@@ -6,6 +7,7 @@ export const STATUS_LABELS: Record<string, string> = {
   review_node: '🔬 Ejecutando code review...',
 }
 
+// Prompts predefinidos en el sidebar para facilitar el uso del agente
 export const QUICK_PROMPTS = [
   { label: '🔍 Code Review completo', text: 'Realiza un code review completo de esta rama' },
   { label: '⚠️ Vulnerabilidades', text: '¿Qué vulnerabilidades de seguridad existen en estos cambios?' },
@@ -15,6 +17,7 @@ export const QUICK_PROMPTS = [
   { label: '🔗 Imports nuevos', text: '¿Qué nuevas dependencias o imports se agregaron?' },
 ]
 
+// Genera un ID único para cada mensaje del chat
 export const generateId = () => {
   return Math.random().toString(36).slice(2, 10)
 }

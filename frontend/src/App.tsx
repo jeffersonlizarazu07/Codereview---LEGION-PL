@@ -4,6 +4,8 @@ import Spinner from "./components/Spinner";
 import { useChat } from "./hooks/useChat";
 
 export default function App() {
+
+  // Toda la lógica del chat está centralizada en useChat, App solo se encarga de ensamblar los componentes y pasar props
   const {
     messages,
     input,

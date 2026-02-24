@@ -2,6 +2,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import {type Message } from '../types'
 
+/* Renderiza un mensaje del chat con diferentes estilos según el rol (user/assistant). Los mensajes del agente soportan Markdown y tienen un cursor parpadeante durante streaming */
 export default function MessageBubble({ message }: { message: Message }) {
   const isUser = message.role === 'user'
 
